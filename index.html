@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TheBoisShitBox</title>
+    
+    <!-- PWA / MOBILE APP SETTINGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- LIBRARIES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Tone.js for Audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Three.js for 3D Game (Added for Game 2) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --primary: #f43f5e;   /* Rose */
+            --secondary: #06b6d4; /* Cyan */
+            --accent: #eab308;    /* Yellow */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; /* Prevent scrolling for app-feel */
+            touch-action: none; /* Prevent zoom on mobile */
+            height: 100vh;
+            width: 100vw;
+            /* iOS Safe Area fix */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            /* Prevent text selection globally */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        h1, h2, h3, .font-display { font-family: 'Fredoka One', cursive; }
+
+        /* Custom Scrollbar for voting lists */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* Party UI Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        .btn-push {
+            background: white;
+            color: var(--bg-color);
+            border-bottom: 6px solid #94a3b8;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Fredoka One', cursive;
+            text-transform: uppercase;
+            position: relative;
+            top: 0;
+            /* Prevent text selection on touch */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+        .btn-push:active {
+            transform: translateY(4px);
+            border-bottom: 2px solid #94a3b8;
+        }
+        .btn-push.btn-primary { background: var(--primary); color: white; border-bottom-color: #be123c; }
+        .btn-push.btn-secondary { background: var(--secondary); color: white; border-bottom-color: #0e7490; }
+
+        /* Avatar */
+        .avatar-blob {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            transition: transform 0.2s;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* Custom Select Styling */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        /* Animations */
+        .pop-in { opacity: 0; transform: scale(0.5); }
+        .slide-up { opacity: 0; transform: translateY(20px); }
+
+        /* Utility */
+        .full-screen-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Enable text selection only in input fields */
+        input, textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+    </style>
+
+    <!-- BLOCK INSPECT ELEMENT & CONTEXT MENU -->
+    <script>
+        // Disable Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        
+        // Disable Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            if(e.key === 'F12' || e.keyCode === 123) return e.preventDefault();
+            if(e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) return e.preventDefault();
+            if(e.ctrlKey && e.key.toUpperCase() === 'U') return e.preventDefault();
+        });
+    </script>
+</head>
+<body>
+
+    <!-- ==================== SOUND MANAGER (Tone.js) ==================== -->
+    <script>
+        const SoundManager = {
+            isInit: false,
+            bgmLoop: null,
+            gameLoop: null,
+            synths: {},
+            volume: 0, // dB
+
+            init: async function() {
+                if (this.isInit) return;
+                
+                try {
+                    await Tone.start();
+                    this.isInit = true;
+                    
+                    Tone.context.lookAhead = 0.5; 
+                    Tone.context.latencyHint = 'balanced';
+                    Tone.Destination.volume.value = this.volume;
+
+                    // --- V3.0 GAME SHOW INSTRUMENTS (Updated) ---
+                    
+                    // 1. FM Bass (Punchier for fast tempo)
+                    this.synths.bass = new Tone.PolySynth(Tone.FMSynth, {
+                        harmonicity: 1,
+                        modulationIndex: 10,
+                        detune: 0,
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.1 },
+                        modulation: { type: "square" },
+                        modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 }
+                    }).toDestination();
+                    this.synths.bass.volume.value = -4;
+
+                    // 2. PolySynth (Brass Stabs)
+                    this.synths.poly = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sawtooth" },
+                        envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 },
+                        filter: { Q: 6, type: "lowpass", rolloff: -24 }
+                    }).toDestination();
+                    this.synths.poly.volume.value = -10;
+
+                    // 3. Lead (The "Ticking" Sound)
+                    this.synths.lead = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "square" },
+                        envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+                    }).toDestination();
+                    this.synths.lead.volume.value = -12;
+
+                    // 4. Drums (Kick)
+                    this.synths.kick = new Tone.MembraneSynth({
+                        pitchDecay: 0.05,
+                        octaves: 10,
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+                    }).toDestination();
+                    this.synths.kick.volume.value = -6;
+                    
+                    // 5. Noise (Hi-hats/Snare)
+                    this.synths.noise = new Tone.NoiseSynth({
+                        noise: { type: 'white' },
+                        envelope: { attack: 0.001, decay: 0.05, sustain: 0 }
+                    }).toDestination();
+                    this.synths.noise.volume.value = -18;
+
+                    // 6. SFX
+                    this.synths.uiClick = new Tone.NoiseSynth({
+                        noise: { type: 'pink' }, 
+                        envelope: { attack: 0.001, decay: 0.05, sustain: 0 }
+                    }).toDestination();
+                    this.synths.uiClick.volume.value = -12;
+
+                    console.log("Audio Engine Started (Game Show Config)");
+                } catch (e) {
+                    console.error("Audio Engine Failed to Start:", e);
+                }
+            },
+
+            setMasterVolume: function(sliderValue) {
+                let dbVal;
+                if (sliderValue <= 0) {
+                    dbVal = -Infinity;
+                } else {
+                    dbVal = 20 * Math.log10(sliderValue / 100);
+                }
+                this.volume = dbVal;
+                if(this.isInit) {
+                    Tone.Destination.volume.rampTo(this.volume, 0.1);
+                }
+            },
+
+            playIntroSequence: function() {
+                if(!this.isInit) return;
+                Tone.Transport.stop(); 
+                Tone.Transport.cancel();
+                const now = Tone.now() + 0.1; 
+                
+                // "Da, Da, Dun-Da" - Bass & Keys Unison
+                try {
+                    // "Da"
+                    this.synths.poly.triggerAttackRelease(["C3", "E3", "G3", "C4"], "8n", now);
+                    this.synths.bass.triggerAttackRelease("C2", "8n", now);
+
+                    // "Da"
+                    this.synths.poly.triggerAttackRelease(["C3", "E3", "G3", "C4"], "8n", now + 0.4);
+                    this.synths.bass.triggerAttackRelease("C2", "8n", now + 0.4);
+
+                    // "Dun"
+                    this.synths.poly.triggerAttackRelease(["B2", "D3", "F3", "B3"], "16n", now + 0.8);
+                    this.synths.bass.triggerAttackRelease("G1", "16n", now + 0.8);
+
+                    // "Da" (Resolution)
+                    this.synths.poly.triggerAttackRelease(["C3", "E3", "G3", "C4"], "2n", now + 1.0);
+                    this.synths.bass.triggerAttackRelease("C2", "2n", now + 1.0);
+                } catch(e) { console.warn("Audio scheduling error", e); }
+
+                setTimeout(() => {
+                    this.playMenuMusic();
+                }, 2500);
+            },
+
+            playMenuMusic: function() {
+                if (this.bgmLoop || !this.isInit) return; 
+                
+                Tone.Transport.stop(); 
+                Tone.Transport.cancel();
+
+                Tone.Transport.bpm.value = 110; // Groovy Lobby Tempo
+                
+                const buffer = 0.1;
+
+                // Funky "Waiting Room" Bass
+                const bassSeq = new Tone.Sequence((time, note) => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    if(note) this.synths.bass.triggerAttackRelease(note, "8n", safeTime);
+                }, ["C2", null, "Eb2", null, "F2", "Gb2", "G2", null], "4n");
+
+                // Light Hi-hats
+                const drumLoop = new Tone.Loop(time => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    this.synths.noise.triggerAttackRelease("32n", safeTime);
+                }, "8n");
+
+                // RESTORED: Brass/Keys Chords (Stabs)
+                // Adds that "Game Show Lobby" feel
+                const chordSeq = new Tone.Sequence((time, note) => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    if(note) this.synths.poly.triggerAttackRelease(note, "16n", safeTime);
+                }, [["C4", "Eb4", "G4"], null, ["Bb3", "D4", "F4"], null], "2n");
+
+                this.bgmLoop = { bass: bassSeq, drum: drumLoop, chord: chordSeq };
+                
+                bassSeq.start(0);
+                drumLoop.start(0);
+                chordSeq.start(0);
+                Tone.Transport.start();
+            },
+
+            stopMenuMusic: function() {
+                if (this.bgmLoop) {
+                    this.bgmLoop.bass.stop();
+                    this.bgmLoop.drum.stop();
+                    this.bgmLoop.chord.stop();
+                    this.bgmLoop = null;
+                }
+            },
+
+            playGameMusic: function() {
+                this.stopMenuMusic();
+                if(this.gameLoop || !this.isInit) return;
+
+                Tone.Transport.stop(); 
+                Tone.Transport.cancel();
+                
+                // === JEOPARDY-STYLE "THINK" MUSIC ===
+                Tone.Transport.bpm.value = 125; // Iconic "Thinking" Tempo
+
+                const buffer = 0.1;
+
+                // 1. Bass - Steady Walking Beat
+                // Simple tonic-dominant pulse
+                const bassSeq = new Tone.Sequence((time, note) => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    if(note) this.synths.bass.triggerAttackRelease(note, "8n", safeTime);
+                }, ["C2", null, "G1", null, "C2", null, "G1", null], "4n");
+
+                // 2. The Iconic "Thinking" Melody Pattern
+                // (Approximation: C, C, C, G(low), C, F, E, D)
+                const melodyNotes = [
+                    "C5", null, "C5", null, "C5", null, "G4", null,
+                    "C5", null, "F5", null, "E5", null, "D5", null,
+                    "C5", null, "C5", null, "C5", null, "G4", null,
+                    "C5", null, "F5", null, "E5", null, "D5", "B4" 
+                ];
+                
+                const melodySeq = new Tone.Sequence((time, note) => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    // Use a short release to make it "plucky"
+                    if(note) this.synths.lead.triggerAttackRelease(note, "16n", safeTime);
+                }, melodyNotes, "8n");
+
+                // 3. Ticking Clock Percussion (Woodblock style)
+                // Hits every beat strictly
+                const drumLoop = new Tone.Loop(time => {
+                    const safeTime = Math.max(time, Tone.now() + buffer);
+                    this.synths.uiClick.triggerAttackRelease("32n", safeTime);
+                }, "4n");
+
+                this.gameLoop = { bassSeq, melodySeq, drumLoop };
+                
+                bassSeq.start(0);
+                melodySeq.start(0);
+                drumLoop.start(0);
+                Tone.Transport.start();
+            },
+
+            stopGameMusic: function() {
+                 if (this.gameLoop) {
+                    this.gameLoop.bassSeq.stop();
+                    this.gameLoop.melodySeq.stop();
+                    this.gameLoop.drumLoop.stop();
+                    this.gameLoop = null;
+                }
+            },
+
+            sfx: function(type) {
+                if(!this.isInit) return;
+                try {
+                    const now = Tone.now() + 0.1; 
+                    
+                    switch(type) {
+                        case 'click':
+                            this.synths.uiClick.triggerAttackRelease("32n", now);
+                            break;
+                        case 'join':
+                            this.synths.lead.triggerAttackRelease("C5", "16n", now);
+                            this.synths.lead.triggerAttackRelease("E5", "16n", now + 0.05);
+                            this.synths.lead.triggerAttackRelease("G5", "16n", now + 0.1);
+                            break;
+                        case 'start':
+                             // Big Brass Hit
+                             this.synths.poly.triggerAttackRelease(["C3", "G3", "C4", "E4"], "2n", now);
+                             this.synths.bass.triggerAttackRelease("C1", "1n", now);
+                             break;
+                        case 'tick':
+                             this.synths.noise.triggerAttackRelease("64n", now);
+                             break;
+                        case 'timeup':
+                            // Classic Wrong Answer/Time Up slide
+                            this.synths.bass.triggerAttackRelease("G2", "8n", now);
+                            this.synths.bass.triggerAttackRelease("Gb2", "8n", now + 0.1);
+                            this.synths.bass.triggerAttackRelease("F2", "8n", now + 0.2);
+                            this.synths.bass.triggerAttackRelease("C2", "2n", now + 0.3);
+                            break;
+                        case 'vote':
+                            this.synths.lead.triggerAttackRelease("C6", "32n", now);
+                            break;
+                        case 'reveal':
+                            this.synths.poly.triggerAttackRelease(["C4", "F4", "A4", "C5"], "2n", now);
+                            break;
+                    }
+                } catch (e) {
+                    console.warn("Audio Error suppressed:", e);
+                }
+            }
+        };
+    </script>
+
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <div id="notification-area" class="fixed top-4 left-0 right-0 z-[100] flex flex-col items-center gap-2 pointer-events-none"></div>
+
+    <!-- ==================== GLOBAL UI ELEMENTS ==================== -->
+    
+    <!-- SETTINGS BUTTON (Top Right) -->
+    <button onclick="App.toggleSettings()" class="fixed top-4 right-4 z-[90] p-3 bg-white/10 rounded-full hover:bg-white/20 transition backdrop-blur-sm border border-white/10 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </button>
+
+    <!-- SETTINGS MODAL -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-[110] bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center transition-opacity opacity-0">
+        <div class="glass-panel p-8 w-full max-w-md mx-6">
+            <h2 class="text-3xl font-display text-white mb-6 text-center">OPTIONS</h2>
+            
+            <div class="mb-8">
+                <label class="block text-gray-400 font-bold mb-4 uppercase tracking-widest text-sm">Master Volume</label>
+                <div class="flex items-center gap-4">
+                    <span class="text-2xl">🔇</span>
+                    <input type="range" id="settings-volume" min="0" max="100" value="80" oninput="App.updateVolume(this.value)">
+                    <span class="text-2xl">🔊</span>
+                </div>
+            </div>
+
+            <button onclick="App.toggleSettings()" class="btn-push w-full py-4 text-xl font-bold rounded-xl">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- ==================== SCREENS ==================== -->
+
+    <!-- 0. TAP TO START OVERLAY -->
+    <div id="screen-tap-start" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
+        <div class="flex-1 flex flex-col items-center justify-center w-full max-w-md cursor-pointer" onclick="App.startApp()">
+            <div class="animate-bounce text-6xl mb-6">👆</div>
+            <h1 class="text-4xl md:text-5xl font-bold uppercase tracking-widest animate-pulse text-cyan-400 font-display">Tap to Start</h1>
+            <p class="text-gray-400 mt-4 text-lg">(Enable Audio)</p>
+        </div>
+        
+        <!-- Volume Slider on Start Screen -->
+        <div class="w-full max-w-xs mt-8 mb-8" onclick="event.stopPropagation()">
+            <label class="block text-gray-500 text-xs font-bold mb-2 uppercase tracking-wider">Volume</label>
+            <div class="flex items-center gap-3">
+                <span class="text-sm">🔈</span>
+                <input type="range" id="intro-volume" min="0" max="100" value="80" oninput="App.updateVolume(this.value)">
+                <span class="text-sm">🔊</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. LANDING SCREEN -->
+    <div id="screen-landing" class="hidden full-screen-center z-50 bg-slate-900 overflow-hidden w-full">
+        
+        <!-- INTRO TEXT OVERLAY -->
+        <div id="intro-welcome" class="absolute z-10 text-4xl sm:text-6xl md:text-7xl font-bold text-white opacity-0 tracking-widest uppercase pointer-events-none text-center px-4">
+            Welcome to
+        </div>
+
+        <!-- MAIN MENU CONTENT (Hidden initially) -->
+        <div id="landing-content" class="flex flex-col items-center justify-center w-full h-full opacity-0 px-4">
+            <div class="text-center mb-8 md:mb-12 relative group w-full px-2">
+                <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-cyan-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                
+                <!-- Fluid Title -->
+                <h1 id="landing-title" class="relative text-[11vw] sm:text-7xl md:text-8xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400 drop-shadow-2xl origin-center font-display leading-tight py-2 break-words w-full tracking-tighter">
+                    TheBoisShitBox
+                </h1>
+            </div>
+            
+            <div id="landing-buttons" class="flex flex-col md:flex-row gap-6 w-full max-w-md md:max-w-xl translate-y-10 opacity-0">
+                <button onclick="App.hostGame()" class="btn-push btn-primary flex-1 py-5 md:py-6 text-xl md:text-2xl rounded-xl shadow-xl">HOST GAME</button>
+                <button onclick="App.joinMenu()" class="btn-push btn-secondary flex-1 py-5 md:py-6 text-xl md:text-2xl rounded-xl shadow-xl">JOIN GAME</button>
+            </div>
+            
+            <p id="landing-version" class="mt-8 text-slate-400 font-mono text-xs md:text-sm opacity-0 max-w-lg text-center leading-relaxed">
+                The Game About "The Bois" (answer as ridiculous as possible...or don't its up to you)
+            </p>
+        </div>
+    </div>
+
+    <!-- 2. HOST UI -->
+    <div id="screen-host" class="hidden absolute inset-0 bg-slate-900">
+        <!-- BACKGROUND DECOR (Isolated so content can scroll over it) -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+            <div class="absolute top-4 left-4 text-6xl md:text-8xl opacity-5 animate-pulse">?</div>
+            <div class="absolute bottom-4 right-4 text-6xl md:text-8xl opacity-5 animate-pulse" style="animation-delay: 1s">!</div>
+        </div>
+
+        <!-- MAIN HOST CONTENT (Scrollable) -->
+        <div class="relative z-10 w-full h-full flex flex-col overflow-hidden">
+            
+            <!-- Lobby View -->
+            <div id="host-lobby" class="flex flex-col items-center w-full h-full pt-8 pb-4 px-4">
+                
+                <!-- Top Section: Selector + Code (Fixed) -->
+                <div class="flex-shrink-0 w-full flex flex-col items-center space-y-4 mb-4 z-20 relative">
+                    <!-- GAME SELECTOR (Framework) -->
+                    <div class="w-full max-w-md">
+                        <label class="block text-gray-400 font-bold mb-2 uppercase tracking-widest text-sm text-center">Select Game Mode</label>
+                        <select id="game-selector" class="w-full bg-gray-800 text-white border-2 border-gray-600 rounded-xl p-4 text-xl font-bold focus:border-cyan-400 outline-none appearance-none cursor-pointer">
+                            <option value="CLASSIC">I Got This! (Classic)</option>
+                            <option value="GAME2">Stonks or Bronks</option>
+                        </select>
+                    </div>
+
+                    <div class="glass-panel px-8 md:px-16 py-6 md:py-8 flex flex-col items-center w-full max-w-2xl text-center cursor-pointer hover:bg-white/5 transition" onclick="App.copyCode()">
+                        <span class="text-gray-400 uppercase tracking-widest text-xs md:text-sm mb-2 font-bold">Room Code</span>
+                        <span id="host-code-display" class="font-display text-5xl md:text-8xl text-cyan-400 tracking-wider">...</span>
+                        <span class="text-xs text-gray-500 mt-2">Click to Copy</span>
+                    </div>
+
+                    <!-- ROUND SELECTOR (NEW) -->
+                    <div class="w-full max-w-md">
+                        <label class="block text-gray-400 font-bold mb-2 uppercase tracking-widest text-sm text-center">Total Rounds</label>
+                        <select id="round-selector" class="w-full bg-gray-800 text-white border-2 border-gray-600 rounded-xl p-4 text-xl font-bold focus:border-cyan-400 outline-none appearance-none cursor-pointer text-center">
+                            <option value="9" selected>9 Rounds</option>
+                            <option value="15">15 Rounds</option>
+                            <option value="25">25 Rounds</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Middle Section: Player Grid (Scrollable) -->
+                <div class="flex-1 w-full overflow-y-auto min-h-0 relative z-10">
+                    <div id="host-player-grid" class="flex flex-wrap gap-4 md:gap-8 justify-center w-full max-w-6xl px-2 pb-32">
+                        <div class="text-gray-500 italic mt-10 text-lg md:text-xl text-center w-full" id="waiting-msg">Waiting for players to join...</div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Start Button (Fixed at bottom) -->
+                <div class="flex-shrink-0 w-full flex justify-center pt-4 z-30 relative">
+                    <button onclick="App.server.startGame()" id="btn-start" class="btn-push w-full max-w-md py-4 md:py-5 text-xl md:text-2xl rounded-2xl opacity-50 cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 shadow-2xl z-20 pointer-events-auto">
+                        START GAME
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game View -->
+            <div id="host-game" class="hidden flex flex-col min-h-screen">
+                <div class="h-2 md:h-3 bg-gray-800 w-full relative shrink-0">
+                    <div id="timer-bar" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 w-full origin-left"></div>
+                </div>
+
+                <div class="flex-1 flex flex-col items-center justify-center p-4 text-center">
+                    <!-- 
+                        PROMPT TEXT FIX: 
+                        break-words, whitespace-normal, and max-width ensure text wraps.
+                        overflow-y-auto on parent ensures scrolling if text is massive.
+                    -->
+                    <h2 id="host-prompt" class="text-3xl md:text-5xl font-bold leading-tight max-w-6xl z-10 drop-shadow-lg mb-2 break-words whitespace-normal transition-all">
+                        Initializing...
+                    </h2>
+                    <!-- Subtitle container for phase instructions -->
+                    <div id="host-subtitle-container" class="mb-8 min-h-[2rem]"></div>
+                    
+                    <div id="host-content" class="w-full flex flex-wrap justify-center gap-4 md:gap-6 z-10 max-w-7xl px-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PLAYER UI -->
+    <div id="screen-player" class="hidden absolute inset-0 bg-slate-900 flex flex-col overflow-y-auto">
+        
+        <!-- PLAYER: LOGIN -->
+        <div id="player-login" class="flex-1 flex flex-col items-center justify-center p-6 space-y-4 md:space-y-6 max-w-md mx-auto w-full min-h-screen">
+            <h2 class="text-4xl font-display text-cyan-400 mb-2">JOIN ROOM</h2>
+            <div class="w-full space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1 ml-1 uppercase">Room Code</label>
+                    <input id="input-code" type="text" maxlength="4" placeholder="ABCD" class="w-full text-center p-4 rounded-xl bg-gray-800 text-white text-3xl font-bold uppercase tracking-widest border-2 border-gray-700 focus:border-pink-500 outline-none transition placeholder-gray-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1 ml-1 uppercase">Nickname</label>
+                    <input id="input-name" type="text" maxlength="12" placeholder="Your Name" class="w-full text-center p-4 rounded-xl bg-gray-800 text-white text-xl font-bold border-2 border-gray-700 focus:border-pink-500 outline-none transition placeholder-gray-600">
+                </div>
+            </div>
+            
+            <!-- UPDATED AVATAR SELECTOR (Dropdown) -->
+            <div class="bg-gray-800/50 p-4 rounded-xl w-full z-20 relative">
+                <div class="text-xs text-center text-gray-400 mb-3 uppercase font-bold">Choose Avatar</div>
+                
+                <button onclick="App.toggleAvatarMenu()" class="w-full bg-gray-700 hover:bg-gray-600 p-3 rounded-xl flex items-center justify-between border-2 border-gray-600 transition active:scale-95">
+                    <span id="current-avatar-display" class="text-4xl filter drop-shadow-lg">👽</span>
+                    <span class="text-gray-300 font-bold text-sm">SELECT ICON</span>
+                    <span class="text-gray-400">▼</span>
+                </button>
+
+                <div id="avatar-menu" class="hidden absolute top-full left-0 right-0 mt-2 bg-gray-800 border-2 border-gray-600 rounded-xl shadow-2xl p-2 grid grid-cols-5 gap-2 max-h-60 overflow-y-auto z-50">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <button onclick="App.connectToHost()" id="btn-join" class="btn-push btn-primary w-full py-4 text-xl font-bold mt-4 rounded-xl">ENTER GAME</button>
+            <button onclick="location.reload()" class="text-sm text-gray-500 mt-4 underline">Back to Menu</button>
+        </div>
+
+        <!-- PLAYER: WAITING -->
+        <div id="player-waiting" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center bg-indigo-900/50 min-h-screen">
+            <div class="animate-bounce text-6xl md:text-7xl mb-6">👀</div>
+            <h3 class="text-2xl md:text-3xl font-bold mb-2">Eyes Up!</h3>
+            <p class="text-indigo-200 text-sm md:text-base">Look at the host screen.</p>
+        </div>
+
+        <!-- PLAYER: INPUT -->
+        <div id="player-input" class="hidden flex-1 flex flex-col p-4 md:p-6 bg-slate-800 min-h-screen">
+            <div class="flex-1 flex flex-col max-w-lg mx-auto w-full">
+                <!-- WRAPPING FIX FOR PLAYER PROMPT -->
+                <div class="bg-slate-700/50 p-4 rounded-xl mb-4 border border-slate-600">
+                    <h3 id="player-prompt-sm" class="text-pink-400 font-bold text-lg md:text-xl text-center leading-snug break-words whitespace-normal">...</h3>
+                </div>
+                <textarea id="player-answer-box" class="flex-1 w-full bg-gray-900 p-4 rounded-xl text-white text-lg resize-none border-2 border-gray-700 focus:border-cyan-400 outline-none mb-4" placeholder="Type your answer here..."></textarea>
+                <button onclick="App.submitAnswer()" class="btn-push btn-primary w-full py-5 text-xl rounded-xl mb-4">SUBMIT</button>
+            </div>
+        </div>
+
+         <!-- PLAYER: VOTING -->
+         <div id="player-vote" class="hidden flex-1 flex flex-col p-4 bg-slate-800 min-h-screen">
+             <div class="w-full max-w-lg mx-auto h-full flex flex-col">
+                <h3 class="text-center font-bold text-2xl mb-4 text-cyan-400">Vote for the best!</h3>
+                <div id="vote-list" class="flex-1 overflow-y-auto space-y-3 pb-4"></div>
+             </div>
+        </div>
+
+        <!-- Player Leaderboard (NEW) -->
+        <div id="player-leaderboard" class="hidden flex-1 flex flex-col p-4 bg-slate-800 min-h-screen">
+            <h3 class="text-center font-bold text-2xl mb-4 text-cyan-400">STANDINGS</h3>
+            <div id="leaderboard-list" class="flex-1 overflow-y-auto space-y-2 pb-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LOGIC: BROWSER SERVER ==================== -->
+    <script>
+        // GAME LIBRARY (MODULAR FRAMEWORK)
+        const GAME_LIBRARY = {
+            'CLASSIC': {
+                title: "I Got This!",
+                maxRounds: 10, 
+                prompts: [
+                    "The worst superpower to have during a job interview.",
+                    "Why I got kicked out of the library.",
+                    "A terrible slogan for a funeral home.",
+                    "What’s really at the bottom of the ocean.",
+                    "The most awkward thing to say on a first date.",
+                    "Why the chicken really crossed the road.",
+                    "A rejected superhero name.",
+                    "The secret to world domination.",
+                    "What grandma keeps in her purse.",
+                    "The worst advice you ever received.",
+                    "A bad time to fart.",
+                    "The name of a heavy metal band for kittens.",
+                    "What aliens actually want from Earth.",
+                    "The weirdest thing to find in your pockets.",
+                    "A bad reason to break up with someone.",
+                    "What the President is really hiding.",
+                    "The best way to annoy your neighbor.",
+                    "Whens the best time to goon?.",
+                    "The real reason I got fired was _____?.",
+                    "What’s the worst thing to say right after sex?",
+                    "My therapist says my biggest issue is _____.",
+                    "The secret ingredient in the family recipe is _____.",
+                    "What did I accidentally bring back from Mexico?",
+                    "The new Disney Channel Original Movie is about _____.",
+                    "What made Grandma finally snap?",
+                    "My biggest fear in life is _____.",
+                    "What’s the next Happy Meal toy?",
+                    "The priest found _____ in the confessional.",
+                    "What’s the fastest way to ruin a first date?",
+                    "My spirit animal is _____.",
+                    "The surgeon accidentally left _____ inside the patient.",
+                    "The plot twist in the new horror movie is _____.",
+                    "I can't beleive its not butter!, its_____",
+                    "What would Goku do?",
+                    "Saitama is one punch man, Who are you?",
+                    "Name 3 top tier ways to goon",
+                    "What flavor is your vape?",
+                    "What strain of weed is that?",
+                    "Uncle Ben told Peter, with great power comes great responsibility. What did your uncle tell you?",
+                    "A buddy lent you their vr headset, what was the first thing that popped up when you tried it?",
+                    "Would you rather have unlimited bacon but no more video games or games, unlimited games, but no more games?",
+                    "Why did you suck my penis in my dream last night?"
+                ]
+            }
+        };
+
+        class BrowserServer {
+            constructor(roomCode, uiCallback) {
+                this.roomCode = roomCode;
+                this.uiCallback = uiCallback;
+                this.peer = null;
+                this.connections = {}; 
+                this.players = {}; 
+                this.state = 'LOBBY'; 
+                this.roundCount = 0;
+                this.maxRounds = 1; 
+                this.currentRound = null;
+                this.timerInterval = null;
+                this.voters = new Set();
+                this.gameDeck = []; 
+                this.currentGameMode = 'CLASSIC';
+
+                this.initNetwork();
+            }
+
+            initNetwork() {
+                const peerId = `neon-party-${this.roomCode}`;
+                this.peer = new Peer(peerId, { debug: 1 });
+                this.peer.on('open', (id) => { console.log('SERVER STARTED with ID:', id); this.uiCallback('SERVER_READY', this.roomCode); });
+                this.peer.on('error', (err) => { 
+                    console.error("PeerJS Error:", err); 
+                    if(err.type === 'unavailable-id') { App.notify("Room code taken. Regenerating...", "error"); setTimeout(() => App.hostGame(), 2000); }
+                    else { App.notify("Connection Error: " + err.type, "error"); }
+                });
+                this.peer.on('connection', (conn) => { this.handleConnection(conn); });
+            }
+
+            handleConnection(conn) {
+                conn.on('open', () => {
+                    if(this.state !== 'LOBBY') { conn.send({ type: 'ERROR', payload: 'Game already in progress!' }); setTimeout(() => conn.close(), 1000); return; }
+                    conn.on('data', (data) => this.handleData(conn.peer, data));
+                    conn.on('close', () => { this.removePlayer(conn.peer); });
+                    conn.peerConnection.onconnectionstatechange = (event) => {
+                        if(conn.peerConnection.connectionState === 'disconnected' || conn.peerConnection.connectionState === 'failed') { this.removePlayer(conn.peer); }
+                    };
+                });
+                this.connections[conn.peer] = conn;
+            }
+
+            removePlayer(peerId) {
+                if (this.players[peerId]) {
+                    delete this.connections[peerId]; delete this.players[peerId];
+                    this.broadcast('PLAYER_LIST', Object.values(this.players));
+                }
+            }
+
+            handleData(peerId, data) {
+                if (data.type === 'JOIN') {
+                    let safeName = data.payload.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 12) || "Player";
+                    this.players[peerId] = { id: peerId, name: safeName, avatar: data.payload.avatar, score: 0, currentAnswer: null };
+                    this.send(peerId, 'JOIN_ACK', { name: safeName });
+                    this.broadcast('PLAYER_LIST', Object.values(this.players));
+                    SoundManager.sfx('join'); App.notify(`${safeName} joined!`, 'success');
+                }
+                if (data.type === 'SUBMIT_ANSWER') {
+                    if (this.players[peerId]) {
+                        this.players[peerId].currentAnswer = data.payload;
+                        this.uiCallback('PLAYER_SUBMITTED', peerId);
+                        SoundManager.sfx('click'); this.checkRoundProgress();
+                    }
+                }
+                if (data.type === 'VOTE') {
+                    const targetId = data.payload;
+                    console.log(`[VOTE] Voter:${peerId} Target:${targetId}`);
+                    if (this.voters.has(peerId)) return; 
+                    if (targetId === peerId) return;
+                    if (this.players[targetId]) {
+                        this.players[targetId].score = (parseInt(this.players[targetId].score) || 0) + 100;
+                        this.voters.add(peerId); SoundManager.sfx('vote');
+                    }
+                    const playerCount = Object.keys(this.players).length;
+                    if (this.voters.size >= playerCount) {
+                        this.endVotingPhase();
+                    }
+                }
+            }
+
+            startGame() {
+                if(Object.keys(this.players).length < 2) { App.notify("Need at least 2 players!", "error"); }
+                
+                // MODULAR GAME LOADER
+                const selector = document.getElementById('game-selector');
+                const selectedMode = selector ? selector.value : 'CLASSIC';
+                this.currentGameMode = selectedMode;
+
+                // Load Config
+                let config = GAME_LIBRARY[selectedMode];
+                
+                // FALLBACK: If GAME2 is selected but not in library (e.g., file loading failed), default to Classic
+                if (!config) {
+                    console.warn("Game Mode not found in library, checking for external load...");
+                    // In a real file system, we would fetch() here. 
+                    // For now, if the user hasn't added Game2, we fallback.
+                    config = GAME_LIBRARY['CLASSIC'];
+                }
+                
+                // READ ROUNDS FROM UI (or default to config)
+                const roundsEl = document.getElementById('round-selector');
+                this.maxRounds = roundsEl ? parseInt(roundsEl.value) : config.maxRounds;
+
+                this.gameDeck = [...config.prompts];
+                this.roundCount = 0; this.voters = new Set();
+                
+                for (let i = this.gameDeck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [this.gameDeck[i], this.gameDeck[j]] = [this.gameDeck[j], this.gameDeck[i]]; }
+                
+                SoundManager.sfx('start'); SoundManager.playGameMusic(); this.nextRound();
+            }
+
+            nextRound() {
+                this.roundCount++; this.voters.clear();
+                if (this.roundCount > this.maxRounds) return this.endGame();
+                if (this.gameDeck.length === 0) { 
+                    const config = GAME_LIBRARY[this.currentGameMode] || GAME_LIBRARY['CLASSIC'];
+                    this.gameDeck = [...config.prompts]; 
+                }
+                const text = this.gameDeck.pop();
+                this.currentRound = { text }; this.state = 'INPUT';
+                this.broadcast('ROUND_START', { text, duration: 60, current: this.roundCount, total: this.maxRounds });
+                Object.values(this.players).forEach(p => p.currentAnswer = null);
+                this.startTimer(60, () => this.endInputPhase());
+            }
+
+            checkRoundProgress() {
+                const allAnswered = Object.values(this.players).every(p => p.currentAnswer);
+                const playerCount = Object.keys(this.players).length;
+                if (allAnswered && playerCount > 0 && this.state === 'INPUT') { this.endInputPhase(); }
+            }
+
+            endInputPhase() {
+                clearInterval(this.timerInterval);
+                this.state = 'VOTING';
+                SoundManager.sfx('timeup');
+                let answers = Object.values(this.players).filter(p => p.currentAnswer).map(p => ({ id: p.id, text: p.currentAnswer }));
+                if(answers.length === 0) { this.nextRound(); return; }
+                for (let i = answers.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [answers[i], answers[j]] = [answers[j], answers[i]]; }
+                this.broadcast('VOTING_PHASE', { answers, question: this.currentRound.text });
+                this.startTimer(60, () => this.endVotingPhase());
+            }
+
+            endVotingPhase() {
+                clearInterval(this.timerInterval); 
+                this.showReveal();
+            }
+
+            showReveal() {
+                this.state = 'REVEAL';
+                const revealData = Object.values(this.players).filter(p => p.currentAnswer).map(p => ({
+                    text: p.currentAnswer,
+                    author: p.name,
+                    avatar: p.avatar
+                }));
+                for (let i = revealData.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [revealData[i], revealData[j]] = [revealData[j], revealData[i]]; }
+                this.broadcast('ROUND_REVEAL', { results: revealData, question: this.currentRound.text });
+                setTimeout(() => this.showResults(), 5000);
+            }
+
+            showResults() {
+                clearInterval(this.timerInterval);
+                this.state = 'SCORING';
+                SoundManager.sfx('reveal');
+                const leaderboard = Object.values(this.players).sort((a,b) => b.score - a.score);
+                this.broadcast('ROUND_RESULTS', { leaderboard });
+                setTimeout(() => this.nextRound(), 6000);
+            }
+
+            endGame() {
+                this.state = 'GAME_OVER';
+                SoundManager.stopGameMusic(); SoundManager.sfx('reveal');
+                const leaderboard = Object.values(this.players).sort((a,b) => b.score - a.score);
+                this.broadcast('GAME_OVER', { leaderboard });
+                // RESET TO MAIN MENU
+                setTimeout(() => {
+                    this.broadcast('RESET_GAME', {});
+                    location.reload();
+                }, 10000);
+            }
+
+            startTimer(seconds, callback) {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                let left = seconds;
+                this.timerInterval = setInterval(() => {
+                    left--;
+                    if(left < 5 && left > 0) SoundManager.sfx('tick');
+                    if (left <= 0) { clearInterval(this.timerInterval); if (callback) callback(); }
+                }, 1000);
+            }
+
+            send(peerId, type, payload) {
+                if (this.connections[peerId] && this.connections[peerId].open) {
+                    this.connections[peerId].send({ type, payload });
+                }
+            }
+
+            broadcast(type, payload) {
+                Object.values(this.connections).forEach(conn => {
+                    if(conn.open) conn.send({ type, payload });
+                });
+                this.uiCallback(type, payload);
+            }
+        }
+    </script>
+
+    <!-- ==================== CLIENT LOGIC ==================== -->
+    <script>
+        const AVATARS = ["👽", "🤖", "👾", "💀", "🤡", "💩", "👻", "👺", "🦍", "🐕", "🦄", "🦖", "🐙", "🦈", "🍆", "🍑", "🌮", "🍺", "💣", "💎", "🎲", "🏆", "🔥", "💯", "🗿", "🤮", "🤡", "🤠", "🥺", "🥶"];
+
+        const App = {
+            role: null,
+            server: null,
+            conn: null,
+            avatar: '👽',
+            myPeerId: null, 
+            
+            notify: (msg, type = 'info') => {
+                const el = document.createElement('div');
+                const colors = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-500' : 'bg-blue-500');
+                el.className = `${colors} text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm transform transition-all duration-300 translate-y-[-100%] opacity-0`;
+                el.innerText = msg;
+                document.getElementById('notification-area').appendChild(el);
+                setTimeout(() => el.classList.remove('translate-y-[-100%]', 'opacity-0'), 10);
+                setTimeout(() => { el.classList.add('opacity-0', 'scale-90'); setTimeout(() => el.remove(), 300); }, 3000);
+            },
+
+            show: (id) => {
+                document.querySelectorAll('body > div[id^="screen-"]').forEach(d => d.classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+            },
+
+            updateVolume: function(val) {
+                document.getElementById('intro-volume').value = val;
+                document.getElementById('settings-volume').value = val;
+                SoundManager.setMasterVolume(val);
+            },
+
+            toggleSettings: function() {
+                const modal = document.getElementById('modal-settings');
+                const isHidden = modal.classList.contains('hidden');
+                if(isHidden) {
+                    modal.classList.remove('hidden');
+                    anime({ targets: modal, opacity: [0, 1], duration: 200, easing: 'easeOutQuad' });
+                } else {
+                    anime({ targets: modal, opacity: 0, duration: 200, easing: 'easeInQuad', complete: () => modal.classList.add('hidden') });
+                }
+                SoundManager.sfx('click');
+            },
+
+            initAvatarSelector: function() {
+                const menu = document.getElementById('avatar-menu');
+                menu.innerHTML = '';
+                AVATARS.forEach(char => {
+                    const btn = document.createElement('button');
+                    btn.className = 'text-3xl hover:bg-gray-700 p-2 rounded transition';
+                    btn.innerText = char;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.selectAvatar(char);
+                    };
+                    menu.appendChild(btn);
+                });
+            },
+
+            toggleAvatarMenu: function(forceState) {
+                const menu = document.getElementById('avatar-menu');
+                // Simple toggle logic
+                if (typeof forceState === 'boolean') {
+                    if (forceState) menu.classList.remove('hidden');
+                    else menu.classList.add('hidden');
+                } else {
+                    menu.classList.toggle('hidden');
+                }
+                SoundManager.sfx('click');
+            },
+
+            selectAvatar: function(char) {
+                this.avatar = char;
+                document.getElementById('current-avatar-display').innerText = char;
+                this.toggleAvatarMenu(false); // Close menu
+                SoundManager.sfx('click');
+            },
+
+            // --- HOST FUNCTIONS ---
+            hostGame: function() {
+                SoundManager.sfx('click');
+                this.role = 'HOST';
+                this.show('screen-host');
+                
+                // Random 4-char code
+                const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+                
+                this.server = new BrowserServer(code, (event, data) => this.handleHostUpdate(event, data));
+            },
+
+            // NEW: MANUAL HOST ADVANCE
+            hostNext: function() {
+                // Removed manual trigger logic
+            },
+
+            copyCode: function() {
+                const code = document.getElementById('host-code-display').innerText;
+                
+                // Function to handle legacy copy
+                const legacyCopy = () => {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = code;
+                    textArea.style.position = "fixed"; // Avoid scrolling
+                    textArea.style.left = "-9999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        this.notify("Room Code Copied!", "success");
+                    } catch (err) {
+                        console.error(err);
+                        this.notify("Manual Copy Required", "error");
+                    }
+                    document.body.removeChild(textArea);
+                };
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(code)
+                        .then(() => this.notify("Room Code Copied!", "success"))
+                        .catch(err => {
+                            console.warn("Clipboard API failed, trying legacy", err);
+                            legacyCopy();
+                        });
+                } else {
+                    legacyCopy();
+                }
+            },
+
+            handleHostUpdate: function(event, data) {
+                if (event === 'SERVER_READY') {
+                    document.getElementById('host-code-display').innerText = data;
+                    anime({ targets: '#host-code-display', scale: [0, 1], rotate: '1turn', duration: 1000 });
+                }
+
+                if (event === 'PLAYER_LIST') {
+                    const grid = document.getElementById('host-player-grid');
+                    grid.innerHTML = '';
+                    
+                    if(data.length === 0) {
+                        grid.innerHTML = '<div class="text-gray-500 italic mt-10 text-lg md:text-xl text-center w-full">Waiting for players to join...</div>';
+                        document.getElementById('btn-start').classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        document.getElementById('btn-start').classList.remove('opacity-50', 'cursor-not-allowed');
+                        
+                        data.forEach((p, index) => {
+                            const div = document.createElement('div');
+                            div.className = 'pop-in flex flex-col items-center p-4 bg-white/5 rounded-2xl border border-white/10 w-28 md:w-32';
+                            div.innerHTML = `
+                                <div class="avatar-blob mb-3 bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-lg text-4xl md:text-5xl">${p.avatar}</div>
+                                <span class="font-bold text-base md:text-lg truncate w-full text-center">${p.name}</span>
+                            `;
+                            grid.appendChild(div);
+                        });
+                        anime({ targets: '.pop-in', opacity: 1, scale: 1, delay: anime.stagger(100) });
+                    }
+                }
+
+                if (event === 'ROUND_START') {
+                    document.getElementById('host-lobby').classList.add('hidden');
+                    document.getElementById('host-game').classList.remove('hidden');
+                    const container = document.getElementById('host-content');
+                    container.innerHTML = ''; 
+                    
+                    if (this.server) {
+                        Object.values(this.server.players).forEach(p => {
+                            const div = document.createElement('div');
+                            div.className = 'flex flex-col items-center transition-all duration-300 opacity-50 p-3 md:p-4 bg-gray-800/50 rounded-xl w-28 md:w-32';
+                            div.setAttribute('data-peer-id', p.id);
+                            // ADDED NAME to "Thinking" screen
+                            div.innerHTML = `
+                                <div class="avatar-blob mb-2 scale-75">${p.avatar}</div>
+                                <div class="text-sm font-bold text-white mb-1 truncate w-full text-center">${p.name}</div>
+                                <span class="text-xs font-bold text-gray-400">Thinking...</span>
+                            `;
+                            container.appendChild(div);
+                        });
+                    }
+                    
+                    const promptEl = document.getElementById('host-prompt');
+                    promptEl.innerText = data.text;
+                    document.getElementById('host-subtitle-container').innerHTML = ''; // Clear subtitle
+                    
+                    anime({ targets: promptEl, translateY: [-50, 0], opacity: [0, 1], duration: 800 });
+                    const bar = document.getElementById('timer-bar');
+                    bar.style.transform = 'scaleX(1)';
+                    anime({ targets: bar, scaleX: 0, duration: data.duration * 1000, easing: 'linear' });
+                }
+
+                if (event === 'PLAYER_SUBMITTED') {
+                    const el = document.querySelector(`div[data-peer-id="${data}"]`);
+                    if (el) {
+                        el.classList.remove('opacity-50', 'bg-gray-800/50');
+                        el.classList.add('bg-green-500/20', 'border', 'border-green-500');
+                        el.querySelector('span:last-child').innerText = "READY!";
+                        el.querySelector('span:last-child').classList.add('text-green-400');
+                        anime({ targets: el, scale: [1, 1.1, 1], duration: 400 });
+                    }
+                }
+
+                if (event === 'VOTING_PHASE') {
+                    // Update Question (Ensure it stays visible)
+                    document.getElementById('host-prompt').innerText = data.question;
+                    document.getElementById('host-subtitle-container').innerHTML = '<span class="text-2xl text-cyan-400 font-bold animate-pulse">VOTE FOR YOUR FAVORITE!</span>';
+                    
+                    const container = document.getElementById('host-content');
+                    container.innerHTML = '';
+                    // document.getElementById('host-controls').classList.add('hidden'); // HIDDEN NOW
+                    document.getElementById('timer-bar').style.transform = 'scaleX(1)';
+
+                    data.answers.forEach(a => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-white text-gray-900 p-6 md:p-8 rounded-xl text-xl md:text-3xl font-bold shadow-2xl max-w-sm md:max-w-md w-full text-center flex items-center justify-center min-h-[120px] md:min-h-[150px] transform hover:scale-105 transition break-words whitespace-normal';
+                        card.textContent = a.text;
+                        container.appendChild(card);
+                    });
+                    anime({ targets: '#host-content > div', scale: [0, 1], delay: anime.stagger(150), easing: 'easeOutBack' });
+                }
+
+                if (event === 'ROUND_REVEAL') {
+                    // Keep Question Visible
+                    document.getElementById('host-prompt').innerText = data.question;
+                    document.getElementById('host-subtitle-container').innerHTML = '<span class="text-2xl text-pink-500 font-bold">THE ANSWERS WERE...</span>';
+                    
+                    const container = document.getElementById('host-content');
+                    container.innerHTML = '';
+
+                    data.results.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-gray-800 border-2 border-gray-600 p-4 rounded-xl flex flex-col items-center w-full max-w-sm';
+                        card.innerHTML = `
+                            <div class="bg-white text-gray-900 p-6 rounded-lg text-xl font-bold w-full text-center mb-4 break-words whitespace-normal min-h-[80px] flex items-center justify-center">
+                                "${item.text}"
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="text-2xl">${item.avatar}</div>
+                                <span class="text-white font-bold text-lg">${item.author}</span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                    anime({ targets: '#host-content > div', translateY: [20, 0], opacity: [0, 1], delay: anime.stagger(100) });
+                }
+
+                if (event === 'ROUND_RESULTS' || event === 'GAME_OVER') {
+                    document.getElementById('host-prompt').innerText = event === 'GAME_OVER' ? "FINAL SCORES" : "LEADERBOARD";
+                    document.getElementById('host-subtitle-container').innerHTML = '';
+                    const container = document.getElementById('host-content');
+                    container.innerHTML = '';
+                    // document.getElementById('host-controls').classList.add('hidden');
+
+                    data.leaderboard.forEach((p, i) => {
+                        const row = document.createElement('div');
+                        // REMOVED COMPLEX ANIMATION FROM HERE TO FIX HOST LEADERBOARD
+                        row.className = 'w-full max-w-3xl bg-gray-800 p-4 rounded-xl flex items-center gap-4 md:gap-6 mb-3 border border-gray-700 shadow-xl';
+                        row.innerHTML = `
+                            <div class="text-3xl md:text-4xl font-display text-gray-500 w-10 md:w-12 text-center flex-shrink-0">${i+1}</div>
+                            <div class="avatar-blob scale-75 flex-shrink-0">${p.avatar}</div>
+                            <span class="text-xl md:text-2xl flex-1 font-bold text-white overflow-hidden text-ellipsis whitespace-nowrap px-4 text-left">${p.name}</span>
+                            <span class="text-3xl md:text-4xl font-display text-primary flex-shrink-0">${p.score}</span>
+                        `;
+                        container.appendChild(row);
+                    });
+                    // Simple fade in
+                    anime({ targets: '#host-content > div', opacity: [0, 1], translateY: [20, 0], delay: anime.stagger(100) });
+                }
+            },
+
+            joinMenu: function() {
+                SoundManager.sfx('click');
+                this.role = 'PLAYER';
+                this.show('screen-player');
+                
+                // Init avatar selector
+                this.initAvatarSelector();
+                this.selectAvatar('👽');
+            },
+
+            connectToHost: function() {
+                SoundManager.sfx('click');
+                const code = document.getElementById('input-code').value.toUpperCase().trim();
+                const name = document.getElementById('input-name').value.trim();
+                if(code.length !== 4) return this.notify("Invalid Room Code (4 chars)", "error");
+                if(!name) return this.notify("Enter a nickname!", "error");
+                const btn = document.getElementById('btn-join');
+                btn.innerText = "CONNECTING..."; btn.disabled = true;
+                const peer = new Peer();
+                peer.on('open', (id) => {
+                    this.myPeerId = id; 
+                    const hostId = `neon-party-${code}`;
+                    this.conn = peer.connect(hostId);
+                    this.conn.on('open', () => { this.conn.send({ type: 'JOIN', payload: { name, avatar: this.avatar } }); });
+                    this.conn.on('data', (msg) => this.handlePlayerMsg(msg));
+                    this.conn.on('close', () => { this.notify("Host disconnected", "error"); setTimeout(() => location.reload(), 2000); });
+                    setTimeout(() => { if(!this.conn.open) { btn.innerText = "ENTER GAME"; btn.disabled = false; this.notify("Could not find room.", "error"); } }, 5000);
+                });
+                peer.on('error', (err) => { btn.innerText = "ENTER GAME"; btn.disabled = false; this.notify("Connection failed.", "error"); });
+            },
+
+            handlePlayerMsg: function(msg) {
+                // RESET HANDLER
+                if (msg.type === 'RESET_GAME') {
+                    location.reload();
+                    return;
+                }
+
+                const { type, payload } = msg;
+                if (type === 'ERROR') {
+                    alert(payload);
+                    location.reload();
+                }
+
+                if (type === 'JOIN_ACK') {
+                    document.getElementById('player-login').classList.add('hidden');
+                    document.getElementById('player-waiting').classList.remove('hidden');
+                    this.notify(`Welcome, ${payload.name}!`);
+                }
+
+                if (type === 'ROUND_START') {
+                    document.getElementById('player-waiting').classList.add('hidden');
+                    document.getElementById('player-vote').classList.add('hidden');
+                    document.getElementById('player-input').classList.remove('hidden');
+                    document.getElementById('player-leaderboard').classList.add('hidden');
+                    SoundManager.sfx('reveal');
+                    
+                    document.getElementById('player-prompt-sm').innerText = payload.text;
+                    const box = document.getElementById('player-answer-box');
+                    box.value = '';
+                    box.focus();
+                }
+
+                if (type === 'VOTING_PHASE') {
+                    document.getElementById('player-input').classList.add('hidden');
+                    document.getElementById('player-waiting').classList.add('hidden');
+                    const list = document.getElementById('player-vote');
+                    list.classList.remove('hidden');
+                    SoundManager.sfx('timeup');
+                    
+                    const listContainer = document.getElementById('vote-list');
+                    listContainer.innerHTML = '';
+
+                    payload.answers.forEach(a => {
+                        // CLIENT SIDE FILTER: Do not show own answer
+                        if (a.id === this.myPeerId) return;
+
+                        const btn = document.createElement('button');
+                        btn.className = 'w-full bg-white text-gray-900 p-5 rounded-xl font-bold text-lg md:text-xl shadow-lg active:scale-95 transition border-b-4 border-gray-300 break-words whitespace-normal h-auto min-h-[3rem]';
+                        btn.textContent = a.text; // Safety
+                        btn.onclick = () => {
+                            this.conn.send({ type: 'VOTE', payload: a.id });
+                            this.showWaiting("Vote Cast!");
+                            SoundManager.sfx('click');
+                        };
+                        listContainer.appendChild(btn);
+                    });
+                }
+
+                if (type === 'ROUND_RESULTS' || type === 'GAME_OVER') {
+                    // SHOW LEADERBOARD ON PHONE
+                    document.getElementById('player-input').classList.add('hidden');
+                    document.getElementById('player-vote').classList.add('hidden');
+                    document.getElementById('player-waiting').classList.add('hidden');
+                    
+                    const lbSection = document.getElementById('player-leaderboard');
+                    lbSection.classList.remove('hidden');
+                    
+                    const listContainer = document.getElementById('leaderboard-list');
+                    listContainer.innerHTML = '';
+                    
+                    payload.leaderboard.forEach((p, i) => {
+                        const row = document.createElement('div');
+                        // Highlight current player
+                        const isMe = p.id === this.myPeerId;
+                        const bgClass = isMe ? 'bg-cyan-800 border-cyan-500' : 'bg-gray-700 border-gray-600';
+                        
+                        row.className = `w-full p-3 rounded-xl flex items-center gap-3 border-2 ${bgClass}`;
+                        row.innerHTML = `
+                            <div class="text-xl font-display text-gray-400 w-6">${i+1}</div>
+                            <div class="text-2xl">${p.avatar}</div>
+                            <div class="flex-1 font-bold text-white truncate">${p.name} ${isMe ? '(YOU)' : ''}</div>
+                            <div class="text-xl font-display text-yellow-400">${p.score}</div>
+                        `;
+                        listContainer.appendChild(row);
+                    });
+                    
+                    SoundManager.sfx('reveal');
+                }
+            },
+
+            submitAnswer: function() {
+                const txt = document.getElementById('player-answer-box').value.trim();
+                if(!txt) return this.notify("Type an answer first!", "error");
+                
+                this.conn.send({ type: 'SUBMIT_ANSWER', payload: txt });
+                this.showWaiting("Answer Sent!");
+                SoundManager.sfx('click');
+            },
+
+            showWaiting: function(msg) {
+                document.getElementById('player-input').classList.add('hidden');
+                document.getElementById('player-vote').classList.add('hidden');
+                document.getElementById('player-leaderboard').classList.add('hidden');
+                document.getElementById('player-waiting').classList.remove('hidden');
+                if(msg) document.querySelector('#player-waiting h3').innerText = msg;
+            },
+
+            // --- STARTUP LOGIC ---
+            startApp: async function() {
+                // Safety wrapper for initial audio context
+                try {
+                    await SoundManager.init();
+                } catch (e) {
+                    console.error("Audio init failed but game will continue", e);
+                }
+                
+                // Fade out overlay
+                const overlay = document.getElementById('screen-tap-start');
+                anime({
+                    targets: overlay,
+                    opacity: 0,
+                    duration: 500,
+                    complete: () => {
+                        overlay.classList.add('hidden');
+                        document.getElementById('screen-landing').classList.remove('hidden');
+                        runIntroSequence();
+                    }
+                });
+            }
+        };
+
+        // --- INTRO ANIMATION ---
+        function runIntroSequence() {
+            // Start Music
+            SoundManager.playIntroSequence();
+
+            const tl = anime.timeline({
+                easing: 'easeOutExpo',
+                duration: 1000
+            });
+
+            tl
+            .add({
+                targets: '#intro-welcome',
+                opacity: [0, 1],
+                scale: [0.8, 1],
+                duration: 1200,
+                easing: 'easeOutQuart'
+            })
+            .add({
+                targets: '#intro-welcome',
+                opacity: 0,
+                scale: 1.5,
+                duration: 800,
+                easing: 'easeInQuad',
+                delay: 500
+            })
+            .add({
+                targets: '#landing-content',
+                opacity: [0, 1],
+                duration: 100
+            }, '-=200') // Overlap slightly
+            .add({
+                targets: '#landing-title',
+                scale: [4, 1], // Zoom out effect
+                opacity: [0, 1],
+                duration: 1200,
+                easing: 'easeOutElastic(1, .6)'
+            })
+            .add({
+                targets: '#landing-buttons',
+                opacity: [0, 1],
+                translateY: [50, 0],
+                duration: 800,
+                delay: 200
+            }, '-=800')
+            .add({
+                targets: '#landing-version',
+                opacity: [0, 1],
+                duration: 800
+            }, '-=600');
+        }
+    </script>
+    
+    <!-- 
+    ================================================================
+    MODULAR GAME: SURVIVE WITH FRIENDS (GAME 2)
+    This script tag attempts to load the external Game2.js file.
+    If the file exists in the folder, it adds the game mode to the library.
+    ================================================================
+    -->
+    <script src="Game2.js" onerror="console.log('Game2.js not found, skipping...')"></script>
+</body>
+</html>
